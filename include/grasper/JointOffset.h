@@ -7,6 +7,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "mar_robot_arm5e/ARM5Arm.h"
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 #include <visp/vpColVector.h>
 #include <visp/vpHomogeneousMatrix.h>
 
@@ -23,6 +24,7 @@ class JointOffset{
 	ros::Subscriber marker_sub;
 	ros::Publisher joint_state_pub;
 	tf::TransformListener listener;
+	tf::TransformBroadcaster broadcaster;
 
 
 	void readJointsCallback(const sensor_msgs::JointState::ConstPtr& m);
