@@ -15,7 +15,7 @@
 #define GRIPPER_MANIPULATION 0.8
 #define GRIPPER_OPENED 1.0
 
-#define CURRENTTHRESHOLD 1.4
+#define CURRENTTHRESHOLD 1.6
 
 vpHomogeneousMatrix tfToVisp(tf::StampedTransform matrix_tf){
 	vpHomogeneousMatrix matrix_visp;
@@ -60,13 +60,10 @@ int main(int argc, char **argv){
 	JointOffset joint_offset(nh, joint_state, joint_state_command, joint_state_fixed);
 	std::cout<<"joint_offset iniciado"<<std::endl;
 	ARM5Arm robot(nh, joint_state_fixed, joint_state_command);
-	VirtualImage g(nh,"/stereo_forward/scaled/left/image_rect_color","/stereo_forward/scaled/left/camera_info");
+
 
 	joint_offset.reset_bMc(initial_posture);
-	while (!g.ready()) {
-		ros::spinOnce();
-		usleep(10000);
-	}
+
 
 
 	//waiting for the first valve detection
@@ -75,7 +72,7 @@ int main(int argc, char **argv){
 	tf::StampedTransform cMh_tf;
 	while(!connector_detected && ros::ok()){
 		try{
-			listener.lookupTransform("/stereo_forward_optical", "/connector", ros::Time(0), cMh_tf);
+			listener.lookupTransform("/stereo_down_optical", "/connector", ros::Time(0), cMh_tf);
 			connector_detected=true;
 		}
 		catch(tf::TransformException &ex){
@@ -88,12 +85,7 @@ int main(int argc, char **argv){
 
 	vpHomogeneousMatrix object_turn(0,0,0,0,0, -1.57);
 
-	vpImage<vpRGBa> Ic;
-	g.open(Ic);
-	g.acquire(Ic);
-	vpDisplayX window(Ic);
-	vpDisplay::display(Ic);
-	vpDisplay::flush(Ic);
+
 
 
 
@@ -119,13 +111,7 @@ int main(int argc, char **argv){
 	robot.getPosition(bMe);
 	vpHomogeneousMatrix cMe=bMc.inverse()*bMe;
 	while((cMe.column(4)-cMh_pre.column(4)).euclideanNorm()>0.02 && ros::ok()){
-		g.acquire(Ic);
-		vpDisplay::display(Ic);
-		//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::displayFrame(Ic, cMh_pre*object_turn, g.K, 0.1, vpColor::none, 2);
-		//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::flush(Ic);
+
 		vpColVector xdot(6);
 		xdot=0;
 		vpHomogeneousMatrix eMv=cMe.inverse()*cMh_pre;
@@ -137,12 +123,12 @@ int main(int argc, char **argv){
 		robot.getPosition(bMe);
 		cMe=bMc.inverse()*bMe;
 		try{
-			listener.lookupTransform("/stereo_forward_optical", "/connector", ros::Time(0), cMh_tf);
+			listener.lookupTransform("/stereo_down_optical", "/connector", ros::Time(0), cMh_tf);
 			cMh=tfToVisp(cMh_tf);
 			cMh_pre=cMh*waypoint_pre;
 		}
 		catch(tf::TransformException &ex){
-			sleep(1);
+
 		}
 	}
 
@@ -154,9 +140,7 @@ int main(int argc, char **argv){
 	vpColVector current_joints;
 	robot.getJointValues(current_joints);
 	while(current_joints[4]<GRIPPER_MANIPULATION && ros::ok()){
-		vpDisplay::display(Ic);
-		vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::flush(Ic);
+
 		robot.setJointVelocity(vel);
 		ros::spinOnce();
 		robot.getJointValues(current_joints);
@@ -174,12 +158,7 @@ int main(int argc, char **argv){
 	vpHomogeneousMatrix cMh_man=cMh*waypoint_man;
 	robot.getPosition(bMe);
 	while((cMe.column(4)-cMh_man.column(4)).euclideanNorm()>0.01 && ros::ok()){
-		g.acquire(Ic);
-		vpDisplay::display(Ic);
-		//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::displayFrame(Ic, cMh_man*object_turn, g.K, 0.1, vpColor::green, 2);
-		vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::red, 2);
-		vpDisplay::flush(Ic);
+
 		vpColVector xdot(6);
 		xdot=0;
 		vpHomogeneousMatrix eMv=cMe.inverse()*cMh_man;
@@ -204,17 +183,23 @@ int main(int argc, char **argv){
 		robot.getJointValues(current_joints);
 	}
 
+	//Close the gripper
+        vel=0;
+        vel[4]=-0.4;
+        robot.getJointValues(current_joints);
+        while(current_joints[4]>GRIPPER_CLOSED && ros::ok() && robot.getCurrent()<CURRENTTHRESHOLD){
+                robot.setJointVelocity(vel);
+                ros::spinOnce();
+                robot.getJointValues(current_joints);
+        }
+
+
 
 	//Reach the extract position
 		vpHomogeneousMatrix cMh_ext=cMh*waypoint_ext;
 		robot.getPosition(bMe);
 		while((cMe.column(4)-cMh_ext.column(4)).euclideanNorm()>0.03 && ros::ok()){
-			g.acquire(Ic);
-			vpDisplay::display(Ic);
-			//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-			vpDisplay::displayFrame(Ic, cMh_ext*object_turn, g.K, 0.1, vpColor::green, 2);
-			vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::red, 2);
-			vpDisplay::flush(Ic);
+
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMv=cMe.inverse()*cMh_ext;
@@ -232,12 +217,7 @@ int main(int argc, char **argv){
 		vpHomogeneousMatrix cMh_ins=cMh*waypoint_ins;
 		robot.getPosition(bMe);
 		while((cMe.column(4)-cMh_ins.column(4)).euclideanNorm()>0.015 && ros::ok()){
-			g.acquire(Ic);
-			vpDisplay::display(Ic);
-			//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-			vpDisplay::displayFrame(Ic, cMh_ins*object_turn, g.K, 0.1, vpColor::green, 2);
-			vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::red, 2);
-			vpDisplay::flush(Ic);
+
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMv=cMe.inverse()*cMh_ins;
@@ -258,18 +238,24 @@ int main(int argc, char **argv){
 			ros::spinOnce();
 			robot.getJointValues(current_joints);
 		}
+		
+		//avanti
+		vel=0;
+                vel[2]=-0.2;
+                robot.getJointValues(current_joints);
+		
+                while(current_joints[2]>1.0 && ros::ok() && robot.getCurrent()<CURRENTTHRESHOLD){
+                        robot.setJointVelocity(vel);
+                        ros::spinOnce();
+                        robot.getJointValues(current_joints);
+                }
 
 
 		//Reach the extract position
 		cMh_ext=cMh*waypoint_ext;
 		robot.getPosition(bMe);
 		while((cMe.column(4)-cMh_ext.column(4)).euclideanNorm()>0.03 && ros::ok()){
-			g.acquire(Ic);
-			vpDisplay::display(Ic);
-			//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-			vpDisplay::displayFrame(Ic, cMh_ext*object_turn, g.K, 0.1, vpColor::green, 2);
-			vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::red, 2);
-			vpDisplay::flush(Ic);
+
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMv=cMe.inverse()*cMh_ext;
@@ -284,93 +270,7 @@ int main(int argc, char **argv){
 
 
 
-	/*std::cout<<"turn right"<<std::endl;
-	//Turn right the valve
-	vel=0;
-	vel[3]=0.4;
-	robot.getJointValues(current_joints);
-
-	while((current_joints[3]<2) && ros::ok() && robot.getCurrent()<CURRENTTHRESHOLD){
-		robot.setJointVelocity(vel);
-		ros::spinOnce();
-		robot.getJointValues(current_joints);
-	}
-	while(robot.getCurrent()>CURRENTTHRESHOLD)
-	{
-		ros::spinOnce();
-	}
-	std::cout<<"turn left"<<std::endl;
-	//Turn left the valve
-	vel=0;
-	vel[3]=-0.4;
-	robot.getJointValues(current_joints);
-
-	while((current_joints[3]>-0.5) && ros::ok() && robot.getCurrent()<CURRENTTHRESHOLD){
-		robot.setJointVelocity(vel);
-		ros::spinOnce();
-		robot.getJointValues(current_joints);
-	}
-	while(robot.getCurrent()>CURRENTTHRESHOLD)
-		{
-			ros::spinOnce();
-		}
-	std::cout<<"open gripper"<<std::endl;
-	//Open the gripper
-	vel=0;
-	vel[4]=0.2;
-	robot.getJointValues(current_joints);
-	while(current_joints[4]<GRIPPER_OPENED && ros::ok()){
-		//vpDisplay::display(Ic);
-		//vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::none, 2);
-		//vpDisplay::flush(Ic);
-		robot.setJointVelocity(vel);
-		ros::spinOnce();
-		robot.getJointValues(current_joints);
-		//robot.getPosition(cMe);
-	}
-	std::cout<<"wrist to 0"<<std::endl;
-	// wrist to 0 position
-	vel=0;
-	vel[3]=0.4;
-	robot.getJointValues(current_joints);
-
-		while((current_joints[3]<0.0) && ros::ok() && robot.getCurrent()<CURRENTTHRESHOLD){
-			robot.setJointVelocity(vel);
-			ros::spinOnce();
-			robot.getJointValues(current_joints);
-		}
-	//Reach the pre_manipualtion position
-	joint_offset.get_bMc(bMc);
-	robot.getPosition(bMe);
-	cMe=bMc.inverse()*bMe;
-	while((cMe.column(4)-cMv_pre.column(4)).euclideanNorm()>0.01 && ros::ok()){
-		g.acquire(Ic);
-		vpDisplay::display(Ic);
-		//vpDisplay::displayFrame(Ic, cMv, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::displayFrame(Ic, cMv_pre*object_turn, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::displayFrame(Ic,cMe, g.K, 0.1, vpColor::none, 2);
-		vpDisplay::flush(Ic);
-		vpColVector xdot(6);
-		xdot=0;
-
-		vpHomogeneousMatrix eMv=cMe.inverse()*cMv_pre;
-		xdot[0]=eMv[0][3]*0.2;
-		xdot[1]=eMv[1][3]*0.2;
-		xdot[2]=eMv[2][3]*0.2;
-		robot.setCartesianVelocity(xdot);
-		ros::spinOnce();
-		robot.getPosition(bMe);
-		cMe=bMc.inverse()*bMe;
-		/*try{
-			listener.lookupTransform("/stereo_forward_optical", "/valve", ros::Time(0), cMv_tf);
-			cMv=tfToVisp(cMv_tf);
-			cMv_pre=cMv*waypoint_pre;
-		}
-		catch(tf::TransformException &ex){
-
-		}*/
-	//}
-
+	
 	return 0;
 
 }

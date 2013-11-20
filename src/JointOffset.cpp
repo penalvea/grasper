@@ -60,17 +60,11 @@ void JointOffset::markerCallback(const geometry_msgs::PoseStamped::ConstPtr &m){
 	}*/
 }
 
-JointOffset::JointOffset(ros::NodeHandle& nh, std::string topic_joint_state, std::string topic_command_joint, std::string topic_joint_state_fixed){
-	std::cout<<"service1"<<std::endl;
-	nh_=nh;
+JointOffset::JointOffset(ros::NodeHandle& nh, std::string topic_joint_state, std::string topic_command_joint, std::string topic_joint_state_fixed): nh_(nh){
 	robot=new ARM5Arm(nh_, topic_joint_state, topic_command_joint);
-	std::cout<<"service2"<<std::endl;
 	joint_state_sub=nh.subscribe<sensor_msgs::JointState>(topic_joint_state, 1, &JointOffset::readJointsCallback, this);
-	std::cout<<"servic3"<<std::endl;
 	marker_sub=nh.subscribe<geometry_msgs::PoseStamped>("/marker_filter_endeffector/marker_pose", 1, &JointOffset::markerCallback, this);
-	std::cout<<"service4"<<std::endl;
 	joint_state_pub=nh.advertise<sensor_msgs::JointState>(topic_joint_state_fixed,1);
-	std::cout<<"servic5"<<std::endl;
 	cMm_found=false;
 	bMc_init=false;
 	offset_.resize(5);
@@ -119,6 +113,9 @@ vpHomogeneousMatrix JointOffset::markerToEndEffector(tf::Transform cMm_tf){
 
 	//Camera to endEffector
 	tf::Transform cMe_tf=cMm_tf*initRotation*mMw_tf*wristRotation*wMe_tf*finalRotation*finalRotation2;//*aux_chan;
+	tf::StampedTransform cMe_st(cMe_tf, ros::Time::now(), "/stereo_down_optical", "/end_effector");
+	broadcaster.sendTransform(cMe_st);
+
 	vpHomogeneousMatrix cMe;
 	cMe[0][0]=cMe_tf.getBasis()[0][0]; cMe[0][1]=cMe_tf.getBasis()[0][1]; cMe[0][2]=cMe_tf.getBasis()[0][2]; cMe[0][3]=cMe_tf.getOrigin().x();
 	cMe[1][0]=cMe_tf.getBasis()[1][0]; cMe[1][1]=cMe_tf.getBasis()[1][1]; cMe[1][2]=cMe_tf.getBasis()[1][2]; cMe[1][3]=cMe_tf.getOrigin().y();
@@ -134,6 +131,8 @@ vpHomogeneousMatrix JointOffset::markerToEndEffector(tf::Transform cMm_tf){
 int JointOffset::reset_bMc(vpColVector initial_posture){
 	vpColVector current_joints;
 	robot->getJointValues(current_joints);
+	if(initial_posture.size()!=5)
+		initial_posture=current_joints;
 	std::cout<<"initial_posture: "<<initial_posture<<std::endl;
 	std::cout<<"current_joints: "<<current_joints<<std::endl;
 	while((initial_posture-current_joints).euclideanNorm()>0.02 && ros::ok()){
@@ -149,7 +148,7 @@ int JointOffset::reset_bMc(vpColVector initial_posture){
 	time=ros::Time::now();
 	while(!cMm_found && (ros::Time::now()-time).toSec()<5){
 		try{
-			listener.lookupTransform("/stereo_forward_optical", "/ee_marker", ros::Time(0), cMm_tf);
+			listener.lookupTransform("/stereo_down_optical", "/ee_marker", ros::Time(0), cMm_tf);
 			cMm_found=true;
 		}
 		catch(tf::TransformException & ex){
