@@ -24,8 +24,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_executable(turnValve src/turnValve.cpp src/JointOffset.cpp)
 rosbuild_add_executable(hotStab src/hotStab.cpp src/JointOffset.cpp)
 #rosbuild_add_executable(jointOffset src/JointOffset.cpp)
-rosbuild_add_executable(hotStab1 src/hotStab_1.cpp src/JointOffset.cpp)
-rosbuild_add_executable(hotStab2 src/hotStab_2.cpp src/JointOffset.cpp)
+#rosbuild_add_executable(hotStab1 src/hotStab_1.cpp src/JointOffset.cpp)
+#rosbuild_add_executable(hotStab2 src/hotStab_2.cpp src/JointOffset.cpp)
+rosbuild_add_executable(hotStab_steps src/hotStab_steps.cpp src/JointOffset.cpp)
 
 rosbuild_add_library(${PROJECT_NAME} ${LIBRARY_TYPE} src/JointOffset.cpp)
 
