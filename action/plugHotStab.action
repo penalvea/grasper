@@ -1,0 +1,8 @@
+#goal definition
+int32 init
+---
+#result definition
+bool succeed
+---
+#feedback
+string action

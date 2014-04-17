@@ -1,0 +1,35 @@
+<launch>
+	<rosparam command="load" file="$(find grasper)/launch/turnValve.yaml" />
+	 <arg name="joint_state" default="/uwsim/joint_state" />
+	 <arg name="joint_state_command" default="/uwsim/joint_state_command" />
+	 <arg name="joint_state_fixed" default="/arm5e/joint_state_angle_fixed" />
+	 <arg name="detector_start" default="/valve_tracker/start_valve_detection" />
+	 <arg name="detector_stop" default="/valve_tracker/stop_valve_detection" />
+	 <arg name="max_current" default="1.6" />
+	 <arg name="velocity_turn" default="0.7" />
+	 <arg name="velocity_aperture" default="0.4" />
+	 <arg name="gripper_manipulation" default="0.5" />
+	 <arg name="gripper_opened" default="1.0" />
+	 <arg name="position_max_right" default="2.0" />
+	 <arg name="position_max_left" default="1.5" />
+	 <arg name="position_return_right" default="-0.5" />
+	 <arg name="position_return_left" default="0.0" />
+		 
+	 <param name="joint_state" value="$(arg joint_state)" />
+	 <param name="joint_state_command" value="$(arg joint_state_command)" />
+	 <param name="joint_state_fixed" value="$(arg joint_state_fixed)" />
+	 <param name="detector_start" value="$(arg detector_start)" />
+	 <param name="detector_stop" value="$(arg detector_stop)" />
+	 <param name="max_current" value="$(arg max_current)" />
+	 <param name="velocity_turn" value="$(arg velocity_turn)" />
+	 <param name="velocity_aperture" value="$(arg velocity_aperture)" />
+	 <param name="gripper_manipulation" value="$(arg gripper_manipulation)" />
+	 <param name="gripper_opened" value="$(arg gripper_opened)" />
+	 <param name="position_max_right" value="$(arg position_max_right)" />
+	 <param name="position_max_left" value="$(arg position_max_left)" />
+	 <param name="position_return_right" value="$(arg position_return_right)" />
+	 <param name="position_return_left" value="$(arg position_return_left)" />
+
+<node name="turnValve" pkg="grasper" type="turn_valve_server" respawn="false" output="screen" />
+
+</launch>
