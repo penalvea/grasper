@@ -9,6 +9,7 @@ void JointOffset::readJointsCallback(const sensor_msgs::JointState::ConstPtr& m)
 			joints_fixed.position.push_back(m->position[i]+offset_[i]);
 			joints_fixed.effort.push_back(m->effort[i]);
 		}
+		joints_fixed.header.stamp=ros::Time::now();
 		joint_state_pub.publish(joints_fixed);
 	}
 }
