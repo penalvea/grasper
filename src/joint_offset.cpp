@@ -181,31 +181,31 @@ int JointOffset::reset_bMc(vpColVector initial_posture){
 		robot->getJointValues(current_joints);
 		std::cout<<(initial_posture-current_joints).euclideanNorm()<<std::endl;
 	}
-	tf::StampedTransform cMm_tf;
-	bool cMm_found=false;
+	cMm_found=false;
 	ros::Time time;
 	time=ros::Time::now();
 	while(!cMm_found && (ros::Time::now()-time).toSec()<5){
-		try{
+		/*try{
 			listener.lookupTransform("/stereo_down_optical", "/ee_marker", ros::Time(0), cMm_tf);
 			cMm_found=true;
 		}
 		catch(tf::TransformException & ex){
 			std::cerr<<"cMm not found"<<std::endl;
-		}
+		}*/
 		ros::spinOnce();
 	}
-	std::cout<<"cMm found"<<std::endl;
 	if(!cMm_found){
 		std::cerr<<"cMm not found in 5 seconds"<<std::endl;
 		return -1;
 	}
 	vpHomogeneousMatrix cMe, bMe;
 
+
 	cMe=markerToEndEffector(cMm_tf);
 	robot->getPosition(bMe);
 
 	bMc=bMe*cMe.inverse();
+
 	bMc_init=true;
 
 	return 0;

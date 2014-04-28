@@ -1,7 +1,7 @@
 <launch>
 	<rosparam command="load" file="$(find grasper)/launch/turnValve.yaml" />
-	 <arg name="joint_state" default="/uwsim/joint_state" />
-	 <arg name="joint_state_command" default="/uwsim/joint_state_command" />
+	 <arg name="joint_state" default="/arm5e/joint_state_angle" />
+	 <arg name="joint_state_command" default="/arm5e/command_angle" />
 	 <arg name="joint_state_fixed" default="/arm5e/joint_state_angle_fixed" />
 	 <arg name="detector_start" default="/valve_tracker/start_valve_detection" />
 	 <arg name="detector_stop" default="/valve_tracker/stop_valve_detection" />

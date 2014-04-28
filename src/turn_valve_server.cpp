@@ -76,7 +76,7 @@ public:
 		return matrix_visp;
 	}
 	void detectValve(bool valve_detected){
-		tf::StampedTransform cMv_tf;
+		/*tf::StampedTransform cMv_tf;
 		tf::TransformListener listener;
 		do{
 			try{
@@ -86,8 +86,11 @@ public:
 			catch(tf::TransformException &ex){
 			}
 			ros::spinOnce();
-		}while(!valve_detected && ros::ok());
-		cMv_=TurnValve::tfToVisp(cMv_tf);
+		}while(!valve_detected && ros::ok());*/
+		//cMv_=TurnValve::tfToVisp(cMv_tf);
+		cMv_[0][0]=0;  cMv_[0][1]=1;  cMv_[0][2]=0; cMv_[0][3]=-0.0;
+		cMv_[1][0]=0;  cMv_[1][1]=0;  cMv_[1][2]=-1; cMv_[1][3]=-0.1;
+		cMv_[2][0]=-1;  cMv_[2][1]=0;  cMv_[2][2]=0; cMv_[2][3]=0.5;
 		valve_detected=true;
 
 
@@ -95,7 +98,6 @@ public:
 	void reachPosition(vpHomogeneousMatrix waypoint){
 		vpHomogeneousMatrix bMc, bMe, cMe, cMgoal;
 		joint_offset_->get_bMc(bMc);
-
 		TurnValve::detectValve(true);
 		cMgoal=cMv_*waypoint;
 
@@ -106,9 +108,9 @@ public:
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMgoal=cMe.inverse()*cMgoal;
-			xdot[0]=eMgoal[0][3]*0.4;
-			xdot[1]=eMgoal[1][3]*0.4;
-			xdot[2]=eMgoal[2][3]*0.4;
+			xdot[0]=eMgoal[0][3]*0.6;
+			xdot[1]=eMgoal[1][3]*0.6;
+			xdot[2]=eMgoal[2][3]*0.6;
 			robot_->setCartesianVelocity(xdot);
 			ros::spinOnce();
 
