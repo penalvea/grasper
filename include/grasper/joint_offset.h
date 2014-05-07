@@ -29,8 +29,8 @@ class JointOffset{
 
 
 	void readJointsCallback(const sensor_msgs::JointState::ConstPtr& m);
-	//void markerCallback(const geometry_msgs::PoseStamped::ConstPtr& m);
-	void markerCallback(const ar_pose::ARMarkers::ConstPtr& m);
+	void markerCallback(const geometry_msgs::PoseStamped::ConstPtr& m);
+	//void markerCallback(const ar_pose::ARMarkers::ConstPtr& m);
 	vpHomogeneousMatrix markerToEndEffector(tf::Transform cMm_tf);
 
 public:

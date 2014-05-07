@@ -76,7 +76,7 @@ public:
 		return matrix_visp;
 	}
 	void detectValve(bool valve_detected){
-		/*tf::StampedTransform cMv_tf;
+		tf::StampedTransform cMv_tf;
 		tf::TransformListener listener;
 		do{
 			try{
@@ -86,11 +86,11 @@ public:
 			catch(tf::TransformException &ex){
 			}
 			ros::spinOnce();
-		}while(!valve_detected && ros::ok());*/
+		}while(!valve_detected && ros::ok());
 		//cMv_=TurnValve::tfToVisp(cMv_tf);
-		cMv_[0][0]=0;  cMv_[0][1]=1;  cMv_[0][2]=0; cMv_[0][3]=-0.0;
-		cMv_[1][0]=0;  cMv_[1][1]=0;  cMv_[1][2]=-1; cMv_[1][3]=-0.1;
-		cMv_[2][0]=-1;  cMv_[2][1]=0;  cMv_[2][2]=0; cMv_[2][3]=0.5;
+		/*cMv_[0][0]=0;  cMv_[0][1]=1;  cMv_[0][2]=0; cMv_[0][3]=-0.15;
+		cMv_[1][0]=0;  cMv_[1][1]=0;  cMv_[1][2]=-1; cMv_[1][3]=-0.15;
+		cMv_[2][0]=-1;  cMv_[2][1]=0;  cMv_[2][2]=0; cMv_[2][3]=0.4;*/
 		valve_detected=true;
 
 
@@ -187,25 +187,33 @@ public:
 				robot_->setJointVelocity(vel);
 				ros::spinOnce();
 				robot_->getJointValues(current_joints);
+				std::cout<<"Current: "<<robot_->getCurrent()<<std::endl;
 			}
+			std::cout<<"Current: "<<robot_->getCurrent()<<std::endl;
 			vel[3]=-velocity;
+			
 			while(current_joints[3]>position_return && ros::ok()){
 				robot_->setJointVelocity(vel);
 				ros::spinOnce();
 				robot_->getJointValues(current_joints);
+				std::cout<<"current: "<<current_joints[3]<<" position_return: "<<position_return<<std::endl;
 			}
 		}
 		else{
+			std::cout<<"Turn left"<<std::endl;
 			while(current_joints[3]>position_max && robot_->getCurrent()<current && ros::ok()){
 				robot_->setJointVelocity(vel);
 				ros::spinOnce();
 				robot_->getJointValues(current_joints);
+				std::cout<<"Current: "<<robot_->getCurrent()<<std::endl;
 			}
+			std::cout<<"Current: "<<robot_->getCurrent()<<std::endl;
 			vel[3]=-velocity;
 			while(current_joints[3]<position_return && ros::ok()){
 				robot_->setJointVelocity(vel);
 				ros::spinOnce();
 				robot_->getJointValues(current_joints);
+				std::cout<<"current: "<<current_joints[3]<<" position_return: "<<position_return<<std::endl;
 			}
 		}
 	}
@@ -217,14 +225,13 @@ public:
 		feedback_.action="Initializing Joint Offset (bMc)";
 		as_.publishFeedback(feedback_);
 		joint_offset_->reset_bMc(initial_posture_);
-		vpHomogeneousMatrix bMc;
-		joint_offset_->get_bMc(bMc);
+
 
 		feedback_.action="Initializing Valve detector Service";
 		as_.publishFeedback(feedback_);
 		std_srvs::Empty::Request req;
 		std_srvs::Empty::Response res;
-		//ros::service::call(det_start_, req, res);
+		ros::service::call(det_start_, req, res);
 
 		feedback_.action="Waiting for the first valve detection";
 		as_.publishFeedback(feedback_);
@@ -240,7 +247,7 @@ public:
 
 		feedback_.action="Stopping Valve detector Service";
 		as_.publishFeedback(feedback_);
-		//ros::service::call(det_stop_, req, res);
+		ros::service::call(det_stop_, req, res);
 
 		feedback_.action="Reach the manipulation position";
 		as_.publishFeedback(feedback_);

@@ -46,7 +46,7 @@ protected:
 
 
 public:
-	HotStab(std::string name): unplug_as_(nh_, name, boost::bind(&HotStab::executeCBUnplug, this, _1), false ), plug_as_(nh_, name, boost::bind(&HotStab::executeCBPlug, this, _1), false ), action_name_(name){
+	HotStab(std::string name): unplug_as_(nh_, "unplug_hot_stab", boost::bind(&HotStab::executeCBUnplug, this, _1), false ), plug_as_(nh_, "plug_hot_stab", boost::bind(&HotStab::executeCBPlug, this, _1), false ), action_name_(name){
 		unplug_as_.start();
 		plug_as_.start();
 		nh_.getParam("joint_state", joint_state_);
@@ -59,7 +59,7 @@ public:
 		waypoint_pre_pre_=mar_params::paramToVispColVector(&nh_, "waypoint_pre_pre");
 		waypoint_undock_=mar_params::paramToVispColVector(&nh_, "waypoint_undock");
 		initial_posture_=mar_params::paramToVispColVector(&nh_, "initial_posture");
-		nh_.getParam("detector_Valvestart", det_start_);
+		nh_.getParam("detector_start", det_start_);
 		nh_.getParam("detector_stop", det_stop_);
 		nh_.getParam("max_current", max_current_);
 		nh_.getParam("velocity_aperture", velocity_aperture_);
@@ -94,6 +94,14 @@ public:
 			ros::spinOnce();
 		}while(!valve_detected && ros::ok());
 		cMh_=HotStab::tfToVisp(cMh_tf);
+		/*cMh_[0][0]=-0.07913152724;  cMh_[0][1]=0.9883773439;  cMh_[0][2]=-0.1298014922; cMh_[0][3]=0.02322718259;
+		cMh_[1][0]=-0.160249269;  cMh_[1][1]=-0.1411287379;  cMh_[1][2]=-0.9769354386; cMh_[1][3]=-0.1983788169;
+		cMh_[2][0]=-0.9838995747;  cMh_[2][1]=-0.05650579903;  cMh_[2][2]=0.1695544794; cMh_[2][3]=0.579123645;*/
+
+       
+        
+      
+
 		valve_detected=true;
 
 
@@ -107,14 +115,14 @@ public:
 
 		robot_->getPosition(bMe);
 		cMe=bMc.inverse()*bMe;
-		while((cMe.column(4)-cMgoal.column(4)).euclideanNorm()>0.02 && ros::ok()){
+		while((cMe.column(4)-cMgoal.column(4)).euclideanNorm()>0.015 && ros::ok()){
 			std::cout<<"Error: "<<(cMe.column(4)-cMgoal.column(4)).euclideanNorm()<<std::endl;
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMgoal=cMe.inverse()*cMgoal;
-			xdot[0]=eMgoal[0][3]*0.4;
-			xdot[1]=eMgoal[1][3]*0.4;
-			xdot[2]=eMgoal[2][3]*0.4;
+			xdot[0]=eMgoal[0][3]*0.6;
+			xdot[1]=eMgoal[1][3]*0.6;
+			xdot[2]=eMgoal[2][3]*0.6;
 			robot_->setCartesianVelocity(xdot);
 			ros::spinOnce();
 
@@ -127,7 +135,9 @@ public:
 	void reachJointPosition(vpColVector desired_joints){
 		vpColVector current_joints;
 		robot_->getJointValues(current_joints);
-		while((desired_joints-current_joints).euclideanNorm()>0.02 && ros::ok()){
+		desired_joints[4]=current_joints[4];
+		while((desired_joints-current_joints).euclideanNorm()>0.015 && ros::ok()){
+			std::cout<<"Error: "<<(desired_joints-current_joints).euclideanNorm()<<std::endl;
 			robot_->setJointVelocity(desired_joints-current_joints);
 			robot_->getJointValues(current_joints);
 			ros::spinOnce();
@@ -165,7 +175,7 @@ public:
 		unplug_as_.publishFeedback(unplug_feedback_);
 		std_srvs::Empty::Request req;
 		std_srvs::Empty::Response res;
-		//ros::service::call(det_start_, req, res);
+		ros::service::call(det_start_, req, res);
 
 		unplug_feedback_.action="Waiting for the first valve detection";
 		unplug_as_.publishFeedback(unplug_feedback_);
@@ -185,7 +195,7 @@ public:
 
 		unplug_feedback_.action="Stopping Valve detector Service";
 		unplug_as_.publishFeedback(unplug_feedback_);
-		//ros::service::call(det_stop_, req, res);
+		ros::service::call(det_stop_, req, res);
 
 		unplug_feedback_.action="Reach the manipulation position";
 		unplug_as_.publishFeedback(unplug_feedback_);
@@ -199,9 +209,9 @@ public:
 		unplug_as_.publishFeedback(unplug_feedback_);
 		HotStab::reachPosition(waypoint_ext_);
 
-		unplug_feedback_.action="Reach the pre pre manipulation position";
+		/*unplug_feedback_.action="Reach the pre pre manipulation position";
 		unplug_as_.publishFeedback(unplug_feedback_);
-		HotStab::reachJointPosition(waypoint_pre_pre_);
+		HotStab::reachJointPosition(waypoint_pre_pre_);*/
 
 		unplug_feedback_.action="Reach the undocking position";
 		unplug_as_.publishFeedback(unplug_feedback_);
@@ -215,19 +225,21 @@ public:
 		plug_as_.publishFeedback(plug_feedback_);
 		std_srvs::Empty::Request req;
 		std_srvs::Empty::Response res;
-		//ros::service::call(det_start_, req, res);
+		ros::service::call(det_start_, req, res);
 
-		plug_feedback_.action="Reach the pre pre manipulation position";
+		/*plug_feedback_.action="Reach the pre pre manipulation position";
 		plug_as_.publishFeedback(plug_feedback_);
-		HotStab::reachJointPosition(waypoint_pre_pre_);
+		HotStab::reachJointPosition(waypoint_pre_pre_);*/
+
+		plug_feedback_.action="Reach the extraction position";
+		plug_as_.publishFeedback(plug_feedback_);
+		HotStab::reachPosition(waypoint_ext_);
 
 		plug_feedback_.action="Stopping Valve detector Service";
 		plug_as_.publishFeedback(plug_feedback_);
-		//ros::service::call(det_stop_, req, res);
+		ros::service::call(det_stop_, req, res);
 
-		plug_feedback_.action="Reach the pre-manipulation position";
-		plug_as_.publishFeedback(plug_feedback_);
-		HotStab::reachPosition(waypoint_pre_);
+		
 
 		plug_feedback_.action="Reach the insertion position";
 		plug_as_.publishFeedback(plug_feedback_);
@@ -244,9 +256,9 @@ public:
 		plug_as_.publishFeedback(plug_feedback_);
 		HotStab::reachPosition(waypoint_ext_);
 
-		plug_feedback_.action="Reach the pre pre manipulation position";
+		/*plug_feedback_.action="Reach the pre pre manipulation position";
 		plug_as_.publishFeedback(plug_feedback_);
-		HotStab::reachJointPosition(waypoint_pre_pre_);
+		HotStab::reachJointPosition(waypoint_pre_pre_);*/
 
 		plug_feedback_.action="Reach the undocking position";
 		plug_as_.publishFeedback(plug_feedback_);

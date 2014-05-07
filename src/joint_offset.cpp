@@ -14,7 +14,7 @@ void JointOffset::readJointsCallback(const sensor_msgs::JointState::ConstPtr& m)
 	}
 }
 
-/*void JointOffset::markerCallback(const geometry_msgs::PoseStamped::ConstPtr &m){
+void JointOffset::markerCallback(const geometry_msgs::PoseStamped::ConstPtr &m){
 
 	cMm_tf.setOrigin(tf::Vector3(m->pose.position.x, m->pose.position.y, m->pose.position.z));
 	cMm_tf.setRotation(tf::Quaternion(m->pose.orientation.x, m->pose.orientation.y, m->pose.orientation.z, m->pose.orientation.w));
@@ -38,9 +38,9 @@ void JointOffset::readJointsCallback(const sensor_msgs::JointState::ConstPtr& m)
 		cMm_found=true;
 	}
 
-}*/
+}
 
-void JointOffset::markerCallback(const ar_pose::ARMarkers::ConstPtr &m){
+/*void JointOffset::markerCallback(const ar_pose::ARMarkers::ConstPtr &m){
 	if(m->markers.size()!=0){
 		cMm_tf.setOrigin(tf::Vector3(m->markers[0].pose.pose.position.x, m->markers[0].pose.pose.position.y, m->markers[0].pose.pose.position.z));
 		cMm_tf.setRotation(tf::Quaternion(m->markers[0].pose.pose.orientation.x, m->markers[0].pose.pose.orientation.y, m->markers[0].pose.pose.orientation.z, m->markers[0].pose.pose.orientation.w));
@@ -64,13 +64,13 @@ void JointOffset::markerCallback(const ar_pose::ARMarkers::ConstPtr &m){
 			cMm_found=true;
 		}
 	}
-}
+}*/
 
 JointOffset::JointOffset(ros::NodeHandle& nh, std::string topic_joint_state, std::string topic_command_joint, std::string topic_joint_state_fixed): nh_(nh){
 	robot=new ARM5Arm(nh_, topic_joint_state, topic_command_joint);
 	joint_state_sub=nh.subscribe<sensor_msgs::JointState>(topic_joint_state, 1, &JointOffset::readJointsCallback, this);
-	//marker_sub=nh.subscribe<geometry_msgs::PoseStamped>("/marker_filter_node/marker_pose", 1, &JointOffset::markerCallback, this);
-	marker_sub=nh.subscribe<ar_pose::ARMarkers>("/ar_pose_ee", 1, &JointOffset::markerCallback, this);
+	marker_sub=nh.subscribe<geometry_msgs::PoseStamped>("/marker_filter_node/marker_pose", 1, &JointOffset::markerCallback, this);
+	//marker_sub=nh.subscribe<ar_pose::ARMarkers>("/ar_pose_ee", 1, &JointOffset::markerCallback, this);
 	joint_state_pub=nh.advertise<sensor_msgs::JointState>(topic_joint_state_fixed,1);
 	cMm_found=false;
 	bMc_init=false;
@@ -185,13 +185,13 @@ int JointOffset::reset_bMc(vpColVector initial_posture){
 	ros::Time time;
 	time=ros::Time::now();
 	while(!cMm_found && (ros::Time::now()-time).toSec()<5){
-		/*try{
+		try{
 			listener.lookupTransform("/stereo_down_optical", "/ee_marker", ros::Time(0), cMm_tf);
 			cMm_found=true;
 		}
 		catch(tf::TransformException & ex){
 			std::cerr<<"cMm not found"<<std::endl;
-		}*/
+		}
 		ros::spinOnce();
 	}
 	if(!cMm_found){
