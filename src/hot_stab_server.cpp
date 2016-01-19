@@ -115,8 +115,8 @@ public:
 
 		robot_->getPosition(bMe);
 		cMe=bMc.inverse()*bMe;
-		while((cMe.column(4)-cMgoal.column(4)).euclideanNorm()>0.015 && ros::ok()){
-			std::cout<<"Error: "<<(cMe.column(4)-cMgoal.column(4)).euclideanNorm()<<std::endl;
+		while((cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()>0.015 && ros::ok()){
+			std::cout<<"Error: "<<(cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()<<std::endl;
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMgoal=cMe.inverse()*cMgoal;

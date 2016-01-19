@@ -87,7 +87,7 @@ public:
 			}
 			ros::spinOnce();
 		}while(!valve_detected && ros::ok());
-		//cMv_=TurnValve::tfToVisp(cMv_tf);
+		cMv_=TurnValve::tfToVisp(cMv_tf);
 		/*cMv_[0][0]=0;  cMv_[0][1]=1;  cMv_[0][2]=0; cMv_[0][3]=-0.15;
 		cMv_[1][0]=0;  cMv_[1][1]=0;  cMv_[1][2]=-1; cMv_[1][3]=-0.15;
 		cMv_[2][0]=-1;  cMv_[2][1]=0;  cMv_[2][2]=0; cMv_[2][3]=0.4;*/
@@ -103,8 +103,8 @@ public:
 
 		robot_->getPosition(bMe);
 		cMe=bMc.inverse()*bMe;
-		while((cMe.column(4)-cMgoal.column(4)).euclideanNorm()>0.02 && ros::ok()){
-			std::cout<<"Error: "<<(cMe.column(4)-cMgoal.column(4)).euclideanNorm()<<std::endl;
+		while((cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()>0.02 && ros::ok()){
+			std::cout<<"Error: "<<(cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()<<std::endl;
 			vpColVector xdot(6);
 			xdot=0;
 			vpHomogeneousMatrix eMgoal=cMe.inverse()*cMgoal;
@@ -128,8 +128,8 @@ public:
 
 		vpColVector q(5);
 		cMgoal[0][3]=cMe[0][3];
-		while((cMe.column(4)-cMgoal.column(4)).euclideanNorm()>0.02 && ros::ok()){
-			std::cout<<"Error: "<<(cMe.column(4)-cMgoal.column(4)).euclideanNorm()<<std::endl;
+		while((cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()>0.02 && ros::ok()){
+			std::cout<<"Error: "<<(cMe.getCol(4)-cMgoal.getCol(4)).euclideanNorm()<<std::endl;
 			vpColVector finalJoints(5), current_joints;
 			vpHomogeneousMatrix bMv=bMc*cMgoal;
 			robot_->getJointValues(current_joints);
